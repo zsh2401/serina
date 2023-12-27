@@ -7,6 +7,8 @@ from config import device
 from dataset import TrainSet, ValidationSet
 from model import Serina
 
+import os
+
 # 玄学
 torch.manual_seed(3407)
 
@@ -24,6 +26,18 @@ criterion = criterion.to(device)
 epoch = 0
 
 
+def resume_state():
+    if os.path.isfile("serina.pth") is False:
+        return
+    state = torch.load("serina.pth")
+    model.load_state_dict(state["model"])
+    global epoch
+    epoch = state["epoch"]
+    optimizer.load_state_dict(state["optimizer"])
+    scheduler.load_state_dict(state["scheduler"])
+    print(f"State resumed")
+
+
 def validate():
     with torch.no_grad():
         correct = 0
@@ -39,8 +53,9 @@ def validate():
             correct += (predicted == labels).sum().item()
 
         accuracy = correct / total
-        print(f'***Validation Set Accuracy: {accuracy * 100:.2f}% ***')
+        # print(f'***Validation Set Accuracy: {accuracy * 100:.2f}% ***')
         return accuracy
+
 
 def train_one_epoch():
     for i, (inputs, labels) in enumerate(data_loader):
@@ -56,16 +71,22 @@ def train_one_epoch():
         loss.backward()
         optimizer.step()
 
-        print(f'Epoch: {epoch + 1}, Batch: {i + 1}, Loss: {loss.item()}')
-
+        # print(f'Epoch: {epoch + 1}, Batch: {i + 1}, Loss: {loss.item()}')
     return loss
 
+
+resume_state()
+print(f"Running on {device}")
 while True:
-    loss =  train_one_epoch()
-    accuracy = validate()
-    scheduler.step()
     epoch += 1
-    print("saving model")
+    print(f"====Epoch {epoch}====")
+    loss = train_one_epoch()
+    scheduler.step()
+    print(f'Epoch: {epoch}, Loss: {loss.item()}.')
+
+    accuracy = validate()
+    print(f"Validation Accuracy {accuracy * 100:.2f}%")
+
     torch.save({
         "model": model.state_dict(),
         "optimizer": optimizer.state_dict(),
@@ -73,4 +94,5 @@ while True:
         "epoch": epoch,
         "accuracy": accuracy
     }, "serina.pth")
-    print(f'Epoch: {epoch}, Loss: {loss.item()}')
+
+    print("Saved")
