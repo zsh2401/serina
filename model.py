@@ -13,6 +13,7 @@ def create_model(categories):
 # The Serina model can identify
 # specified sound effect.
 class Serina(nn.Module):
+
     def __init__(self):
         super(Serina, self).__init__()
         self.conv1 = nn.Conv2d(1, 16, kernel_size=3, stride=1, padding=1)
