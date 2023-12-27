@@ -1,13 +1,17 @@
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
+import torchvision
 
 from label import get_categories
 
 
 # Create the model
-def create_model():
-    return Serina()
+def create_model(num_classes):
+    model = torchvision.models.resnet18(pretrained=True)
+    model.fc = nn.Linear(model.fc.in_features, num_classes)
+    return model
+    # return torch.
 
 
 # The Serina model can identify

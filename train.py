@@ -5,7 +5,8 @@ from torch.utils.data import DataLoader
 
 from config import device
 from dataset import TrainSet, ValidationSet
-from model import Serina
+from label import get_categories
+from model import Serina, create_model
 
 import os
 
@@ -18,7 +19,7 @@ torch.manual_seed(3407)
 data_loader = DataLoader(TrainSet(), shuffle=True, batch_size=batch_size)
 val_loader = DataLoader(ValidationSet(), shuffle=True, batch_size=batch_size)
 
-model = Serina()
+model = create_model(get_categories())
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
