@@ -9,11 +9,14 @@ from model import Serina
 
 import os
 
+batch_size = 64
+if "BATCH_SIZE" in os.environ:
+    batch_size = int(os.environ["BATCH_SIZE"])
 # 玄学
 torch.manual_seed(3407)
 
-data_loader = DataLoader(TrainSet(), shuffle=True, batch_size=200)
-val_loader = DataLoader(ValidationSet(), shuffle=True, batch_size=200)
+data_loader = DataLoader(TrainSet(), shuffle=True, batch_size=batch_size)
+val_loader = DataLoader(ValidationSet(), shuffle=True, batch_size=batch_size)
 
 model = Serina()
 criterion = nn.CrossEntropyLoss()

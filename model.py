@@ -6,7 +6,7 @@ from label import get_categories
 
 
 # Create the model
-def create_model(categories):
+def create_model():
     return Serina()
 
 
