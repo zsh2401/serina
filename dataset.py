@@ -3,6 +3,7 @@ from torchaudio.transforms import MelSpectrogram, AmplitudeToDB
 from label import label_to_index
 from torch.utils.data import Dataset, DataLoader
 import pandas as pd
+import torchvision.transforms as VT
 
 df = pd.read_csv("./ESC-50/meta/esc50.csv")
 
@@ -22,7 +23,15 @@ def select(start_percent, end_percent):
 
 class SoundDataset(Dataset):
     def __init__(self, start_percent, end_percent):
-        self.transformation = torchaudio.transforms.Spectrogram()
+        self.spectrogram_transform = torchaudio.transforms.Spectrogram()
+        self.vision_transform = VT.Compose([
+            VT.ToPILImage(),
+            VT.Lambda(lambda x: x.convert('RGB')),
+            VT.Resize((224,224)),
+            VT.ToTensor(),  # 将图片转换为Tensor
+            VT.Normalize(mean=[0.485, 0.456, 0.406],  # 图像标准化
+                         std=[0.229, 0.224, 0.225])
+        ])
         self.target_sample_rate = 16_000
         self.df = select(start_percent, end_percent)
 
@@ -38,9 +47,10 @@ class SoundDataset(Dataset):
             resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=self.target_sample_rate)
             waveform = resampler(waveform)
 
-        waveform = self.transformation(waveform)
+        spectrogram = self.spectrogram_transform(waveform)
+        waveform_conv_tensor = self.vision_transform(spectrogram)
 
-        return waveform, label_to_index(row.category.values[0])
+        return waveform_conv_tensor, label_to_index(row.category.values[0])
 
 
 class TrainSet(SoundDataset):
