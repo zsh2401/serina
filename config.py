@@ -3,7 +3,7 @@ import os
 import torch.cuda
 
 DEVICE = "cpu"
-SAMPLE_RATE = 16_000
+SAMPLE_RATE = 32_000
 BATCH_SIZE = 64
 
 
