@@ -5,12 +5,12 @@ from torch.utils.data import DataLoader
 from dataset import TestSet
 from label import get_categories
 from model import create_model
-from config import DEVICE
+from config import DEVICE, PTH_NAME
 
 with torch.no_grad():
     model = create_model(get_categories())
 
-    pth = torch.load("serina.pth")
+    pth = torch.load(PTH_NAME)
     model.load_state_dict(pth["model"])
 
     model.to(DEVICE)

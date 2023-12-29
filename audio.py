@@ -12,6 +12,17 @@ def standardize(waveform, sample_rate, target_sample_rate):
     return waveform
 
 
+def waveform_to_log_mel_spectrogram(waveform, sample_rate):
+    # 转换为梅尔频谱图
+    spectrogram_transform = AT.MelSpectrogram(sample_rate=sample_rate)
+    mel_spectrogram = spectrogram_transform(waveform)
+
+    # 转换为对数尺度
+    log_mel_spectrogram = AT.AmplitudeToDB()(mel_spectrogram)
+
+    return log_mel_spectrogram
+
+
 def waveform_to_mel_spectrogram(waveform, sample_rate):
     # 转换为梅尔频谱图
     spectrogram_transform = AT.MelSpectrogram(sample_rate=sample_rate)

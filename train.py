@@ -3,7 +3,7 @@ import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader
 
-from config import DEVICE
+from config import DEVICE, PTH_NAME, LEARN_RATE
 from dataset import TrainSet, ValidationSet
 from label import get_categories
 from model import Serina, create_model
@@ -21,7 +21,7 @@ val_loader = DataLoader(ValidationSet(), shuffle=True, batch_size=batch_size)
 
 model = create_model(get_categories())
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
+optimizer = optim.Adam(model.parameters(), lr=LEARN_RATE)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
 
 model.to(DEVICE)
@@ -31,9 +31,9 @@ epoch = 0
 
 
 def resume_state():
-    if os.path.isfile("serina.pth") is False:
+    if os.path.isfile(PTH_NAME) is False:
         return
-    state = torch.load("serina.pth")
+    state = torch.load(PTH_NAME)
     model.load_state_dict(state["model"])
     global epoch
     epoch = state["epoch"]
