@@ -3,7 +3,7 @@ import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader
 
-from config import device
+from config import DEVICE
 from dataset import TrainSet, ValidationSet
 from label import get_categories
 from model import Serina, create_model
@@ -24,8 +24,8 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
 
-model.to(device)
-criterion = criterion.to(device)
+model.to(DEVICE)
+criterion = criterion.to(DEVICE)
 
 epoch = 0
 
@@ -47,8 +47,8 @@ def validate():
         correct = 0
         total = 0
         for i, (inputs, labels) in enumerate(val_loader):
-            labels = labels.to(device)
-            inputs = inputs.to(device)
+            labels = labels.to(DEVICE)
+            inputs = inputs.to(DEVICE)
 
             outputs = model(inputs)
             _, predicted = torch.max(outputs.data, 1)  # 获取每个样本的最大logit值索引作为预测结果
@@ -63,8 +63,8 @@ def validate():
 
 def train_one_epoch():
     for i, (inputs, labels) in enumerate(data_loader):
-        labels = labels.to(device)
-        inputs = inputs.to(device)
+        labels = labels.to(DEVICE)
+        inputs = inputs.to(DEVICE)
 
         # 梯度清零
         optimizer.zero_grad()
@@ -80,7 +80,7 @@ def train_one_epoch():
 
 
 resume_state()
-print(f"Running on {device}")
+print(f"Running on {DEVICE}")
 while True:
     epoch += 1
     print(f"====Epoch {epoch}====")

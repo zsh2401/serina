@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from dataset import TestSet
 from label import get_categories
 from model import create_model
-from config import device
+from config import DEVICE
 
 with torch.no_grad():
     model = create_model(get_categories())
@@ -13,7 +13,7 @@ with torch.no_grad():
     pth = torch.load("serina.pth")
     model.load_state_dict(pth["model"])
 
-    model.to(device)
+    model.to(DEVICE)
     model.eval()
 
     test_dataset = TestSet()
@@ -25,8 +25,8 @@ with torch.no_grad():
 
     with torch.no_grad():  # 在这个块中，不跟踪梯度，节省内存和计算
         for inputs, labels in test_loader:
-            inputs = inputs.to(device)
-            labels = labels.to(device)
+            inputs = inputs.to(DEVICE)
+            labels = labels.to(DEVICE)
 
             outputs = model(inputs)
 
