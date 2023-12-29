@@ -5,7 +5,7 @@ import torch.cuda
 DEVICE = "cpu"
 SAMPLE_RATE = 32_000
 BATCH_SIZE = 64
-# log_mel_spec, mel_spec, spec
+# log_mel, mel, spec
 S_TYPE = "mel_spec"
 LEARN_RATE = 0.001
 # -1 is infinite
@@ -20,9 +20,12 @@ if "DEVICE" in os.environ:
     DEVICE = str(os.environ["DEVICE"])
 
 if "SAMPLE_RATE" in os.environ:
-    DEVICE = int(os.environ["SAMPLE_RATE"])
+    SAMPLE_RATE = int(os.environ["SAMPLE_RATE"])
 
 if "S_TYPE" in os.environ:
-    DEVICE = int(os.environ["S_TYPE"])
+    S_TYPE = str(os.environ["S_TYPE"])
+
+if "EPOCH" in os.environ:
+    EPOCH = int(os.environ["EPOCH"])
 
 PTH_NAME = f"model.{S_TYPE}.{SAMPLE_RATE}hz.pth"

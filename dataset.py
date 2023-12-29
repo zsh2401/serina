@@ -3,7 +3,7 @@ import torchaudio
 from torch.utils.data import Dataset, DataLoader
 
 from audio import *
-from config import SAMPLE_RATE, BATCH_SIZE
+from config import SAMPLE_RATE, BATCH_SIZE, S_TYPE
 from label import label_to_index
 
 df = pd.read_csv("./ESC-50/meta/esc50.csv")
@@ -38,7 +38,14 @@ class SoundDataset(Dataset):
         file_path = "./ESC-50/audio/" + row.filename.values[0]
         waveform, sample_rate = torchaudio.load(file_path)
         waveform = standardize(waveform, sample_rate, SAMPLE_RATE)
-        waveform = waveform_to_mel_spectrogram(waveform,sample_rate)
+
+        if S_TYPE == "mel":
+            waveform = waveform_to_mel_spectrogram(waveform, sample_rate)
+        elif S_TYPE == "log_mel":
+            waveform = waveform_to_log_mel_spectrogram(waveform, sample_rate)
+        else:
+            waveform = waveform_to_spectrogram(waveform, sample_rate)
+
         waveform = spectrogram_to_image_tensor(waveform)
 
         return waveform, label_to_index(row.category.values[0])
