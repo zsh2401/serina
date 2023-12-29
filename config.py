@@ -29,3 +29,8 @@ if "EPOCH" in os.environ:
     EPOCH = int(os.environ["EPOCH"])
 
 PTH_NAME = f"model.{S_TYPE}.{SAMPLE_RATE}hz.pth"
+
+print("==Serina Configration==")
+print(
+    f"DEVICE {DEVICE}, SAMPLE_RATE {SAMPLE_RATE}hz, S_TYPE {S_TYPE}, BATCH_SIZE {BATCH_SIZE}, EPOCH {'Inf' if EPOCH < 0 else str(EPOCH)}")
+print("==Serina Configration==")

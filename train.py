@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+import time
+
 import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader
@@ -9,6 +11,7 @@ from label import get_categories
 from model import Serina, create_model
 
 import os
+from progress.bar import Bar
 
 batch_size = 64
 if "BATCH_SIZE" in os.environ:
@@ -61,22 +64,25 @@ def validate():
         return accuracy
 
 
-def train_one_epoch():
-    for i, (inputs, labels) in enumerate(data_loader):
-        labels = labels.to(DEVICE)
-        inputs = inputs.to(DEVICE)
+def train_one_epoch(epoch_str):
+    with Bar(f'Epoch {epoch_str} Training ', max=len(data_loader), suffix='%(percent)d%%') as bar:
+        for i, (inputs, labels) in enumerate(data_loader):
+            labels = labels.to(DEVICE)
+            inputs = inputs.to(DEVICE)
 
-        # 梯度清零
-        optimizer.zero_grad()
+            # 梯度清零
+            optimizer.zero_grad()
 
-        # 前向 + 反向 + 优化
-        outputs = model(inputs)
-        loss = criterion(outputs, labels)
-        loss.backward()
-        optimizer.step()
+            bar.next(1)
 
-        # print(f'Epoch: {epoch + 1}, Batch: {i + 1}, Loss: {loss.item()}')
-    return loss
+            # 前向 + 反向 + 优化
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+
+            # print(f'Epoch: {epoch + 1}, Batch: {i + 1}, Loss: {loss.item()}')
+        return loss
 
 
 resume_state()
@@ -88,13 +94,14 @@ while EPOCH < 0 or epoch < EPOCH:
         epoch_str = f"[{epoch}/{EPOCH}]"
 
     print(f"====Epoch {epoch_str}====")
-    loss = train_one_epoch()
+    start = time.time()
+    loss = train_one_epoch(epoch_str)
     scheduler.step()
-    if EPOCH < 0:
-        print(f'Loss: {loss.item()}.')
 
+    print(f'loss: {loss.item()}.')
+    print(f"costs {time.time() - start:.2f}s")
     accuracy = validate()
-    print(f"Validation Accuracy {accuracy * 100:.2f}%")
+    print(f"validation accuracy {accuracy * 100:.2f}%")
 
     torch.save({
         "model": model.state_dict(),
@@ -102,6 +109,6 @@ while EPOCH < 0 or epoch < EPOCH:
         "scheduler": scheduler.state_dict(),
         "epoch": epoch,
         "accuracy": accuracy
-    }, "serina.pth")
+    }, PTH_NAME)
 
     print("Saved")
