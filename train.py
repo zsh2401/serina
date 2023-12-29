@@ -3,7 +3,7 @@ import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader
 
-from config import DEVICE, PTH_NAME, LEARN_RATE
+from config import DEVICE, PTH_NAME, LEARN_RATE, EPOCH
 from dataset import TrainSet, ValidationSet
 from label import get_categories
 from model import Serina, create_model
@@ -81,12 +81,17 @@ def train_one_epoch():
 
 resume_state()
 print(f"Running on {DEVICE}")
-while True:
+while EPOCH < 0 or epoch < EPOCH:
     epoch += 1
-    print(f"====Epoch {epoch}====")
+    epoch_str = epoch
+    if EPOCH > 0:
+        epoch_str = f"[{epoch}/{EPOCH}]"
+
+    print(f"====Epoch {epoch_str}====")
     loss = train_one_epoch()
     scheduler.step()
-    print(f'Epoch: {epoch}, Loss: {loss.item()}.')
+    if EPOCH < 0:
+        print(f'Loss: {loss.item()}.')
 
     accuracy = validate()
     print(f"Validation Accuracy {accuracy * 100:.2f}%")

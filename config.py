@@ -7,7 +7,9 @@ SAMPLE_RATE = 32_000
 BATCH_SIZE = 64
 # log_mel_spec, mel_spec, spec
 S_TYPE = "mel_spec"
-LEARN_RATE=0.001
+LEARN_RATE = 0.001
+# -1 is infinite
+EPOCH = -1
 
 if torch.cuda.is_available():
     DEVICE = "cuda"
