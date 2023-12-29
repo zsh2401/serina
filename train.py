@@ -4,7 +4,7 @@ import time
 import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader
-
+import matplotlib as M
 from config import DEVICE, PTH_NAME, LEARN_RATE, EPOCH
 from dataset import TrainSet, ValidationSet
 from label import get_categories
@@ -31,6 +31,8 @@ model.to(DEVICE)
 criterion = criterion.to(DEVICE)
 
 epoch = 0
+loss_curve = []
+accuracy_curve = []
 
 
 def resume_state():
@@ -39,9 +41,13 @@ def resume_state():
     state = torch.load(PTH_NAME)
     model.load_state_dict(state["model"])
     global epoch
+    global accuracy_curve
+    global loss_curve
     epoch = state["epoch"]
     optimizer.load_state_dict(state["optimizer"])
     scheduler.load_state_dict(state["scheduler"])
+    loss_curve = state["loss_curve"]
+    accuracy_curve = state["accuracy_curve"]
     print(f"State resumed")
 
 
@@ -85,8 +91,10 @@ def train_one_epoch(epoch_str):
         return loss
 
 
+
 resume_state()
 print(f"Running on {DEVICE}")
+
 while EPOCH < 0 or epoch < EPOCH:
     epoch += 1
     epoch_str = epoch
@@ -98,17 +106,21 @@ while EPOCH < 0 or epoch < EPOCH:
     loss = train_one_epoch(epoch_str)
     scheduler.step()
 
+    loss_curve.append(loss.item())
     print(f'loss: {loss.item()}.')
     print(f"costs {time.time() - start:.2f}s")
     accuracy = validate()
     print(f"validation accuracy {accuracy * 100:.2f}%")
+    accuracy_curve.append(accuracy * 100)
 
     torch.save({
         "model": model.state_dict(),
         "optimizer": optimizer.state_dict(),
         "scheduler": scheduler.state_dict(),
         "epoch": epoch,
-        "accuracy": accuracy
+        "accuracy": accuracy,
+        "accuracy_curve": accuracy_curve,
+        "loss_curve": loss_curve
     }, PTH_NAME)
 
     print("Saved")
