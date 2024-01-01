@@ -11,6 +11,10 @@ LEARN_RATE = 0.001
 # -1 is infinite
 EPOCH = -1
 
+# r18 r50 normal
+# default r18
+MODEL = "resnet-18"
+
 if torch.cuda.is_available():
     DEVICE = "cuda"
 elif torch.backends.mps.is_available():
