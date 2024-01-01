@@ -4,11 +4,10 @@ import time
 import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader
-import matplotlib as M
-from config import DEVICE, PTH_NAME, LEARN_RATE, EPOCH
-from dataset import TrainSet, ValidationSet
-from label import get_categories
-from model import Serina, create_model
+from scode.config import DEVICE, PTH_NAME, LEARN_RATE, EPOCH
+from scode.dataset import TrainSet, ValidationSet
+from scode.dataset.label import get_categories
+from scode.model import create_model
 
 import os
 from progress.bar import Bar

@@ -1,12 +1,14 @@
+import os.path
+
 import pandas as pd
 import torchaudio
 from torch.utils.data import Dataset, DataLoader
 
-from audio import *
-from config import SAMPLE_RATE, BATCH_SIZE, S_TYPE
-from label import label_to_index
+from scode.util.audio import *
+from scode.config import SAMPLE_RATE, BATCH_SIZE, S_TYPE
+from scode.dataset.label import label_to_index
 
-df = pd.read_csv("./ESC-50/meta/esc50.csv")
+df = pd.read_csv(os.path.dirname(__file__) + "/../../ESC-50/meta/esc50.csv")
 
 
 def select(start_percent, end_percent):
@@ -32,12 +34,16 @@ class SoundDataset(Dataset):
     def to_data_loader(self):
         return DataLoader(self, shuffle=True, batch_size=BATCH_SIZE)
 
-    def __getitem__(self, item):
+    def get_raw_info(self, item):
         row = self.df.take([item], axis=0)
 
-        file_path = "./ESC-50/audio/" + row.filename.values[0]
+        file_path = os.path.dirname(__file__) + "/../../ESC-50/audio/" + row.filename.values[0]
         waveform, sample_rate = torchaudio.load(file_path)
-        mlcc = get_mlcc(waveform,sample_rate)
+
+        return waveform, sample_rate, file_path, row.category.values[0]
+
+    def get_item_with_file_path(self, item):
+        waveform, sample_rate, file_path, category = self.get_raw_info(item)
         waveform = standardize(waveform, sample_rate, SAMPLE_RATE)
 
         if S_TYPE == "mel":
@@ -49,9 +55,11 @@ class SoundDataset(Dataset):
 
         waveform = spectrogram_to_image_tensor(waveform)
 
-        combined = combine_spectrogram_and_mlcc(waveform,mlcc)
+        return waveform, label_to_index(category), file_path
 
-        return combined, label_to_index(row.category.values[0])
+    def __getitem__(self, item):
+        w, l, f = self.get_item_with_file_path(item)
+        return w, l
 
 
 class TrainSet(SoundDataset):

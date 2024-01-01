@@ -1,21 +1,11 @@
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
-import torchvision
-from torch.nn import *
-
-from label import get_categories
 
 
 # Create the model
-def create_model(num_classes):
-    # model = torchvision.models.resnet18(pretrained=True)
-    model = torchvision.models.resnet50(pretrained=True)
-    model.conv1 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
-    model.fc = nn.Linear(model.fc.in_features, num_classes)
-    return model
-    # return Serina(num_classes)
 
+# def create_resnet_18()
 
 # The Serina model can identify
 # specified sound effect.

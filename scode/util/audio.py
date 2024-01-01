@@ -73,7 +73,6 @@ vision_transform = VT.Compose([
     VT.ToPILImage(),
     VT.Lambda(lambda x: x.convert('RGB')),
     VT.Resize((224, 224)),
-    # VT.RandomCrop(224),
     VT.ToTensor(),  # 将图片转换为Tensor
     VT.Normalize(mean=[0.485, 0.456, 0.406],  # 图像标准化
                  std=[0.229, 0.224, 0.225])

@@ -2,10 +2,10 @@
 import torch
 from torch.utils.data import DataLoader
 
-from dataset import TestSet
-from label import get_categories
-from model import create_model
-from config import DEVICE, PTH_NAME
+from scode.dataset import TestSet
+from scode.dataset.label import get_categories
+from scode.model import create_model
+from scode.config import DEVICE, PTH_NAME
 
 with torch.no_grad():
     model = create_model(get_categories())
