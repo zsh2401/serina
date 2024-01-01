@@ -37,6 +37,7 @@ class SoundDataset(Dataset):
 
         file_path = "./ESC-50/audio/" + row.filename.values[0]
         waveform, sample_rate = torchaudio.load(file_path)
+        mlcc = get_mlcc(waveform,sample_rate)
         waveform = standardize(waveform, sample_rate, SAMPLE_RATE)
 
         if S_TYPE == "mel":
@@ -48,7 +49,9 @@ class SoundDataset(Dataset):
 
         waveform = spectrogram_to_image_tensor(waveform)
 
-        return waveform, label_to_index(row.category.values[0])
+        combined = combine_spectrogram_and_mlcc(waveform,mlcc)
+
+        return combined, label_to_index(row.category.values[0])
 
 
 class TrainSet(SoundDataset):
