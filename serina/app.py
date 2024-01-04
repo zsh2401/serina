@@ -11,8 +11,8 @@ import numpy as np
 class SerinaApplication:
     def __init__(self):
         self.model = create_model(get_categories())
-        checkpoint = torch.load(PTH_NAME)
-        self.model.load_state_dict(checkpoint["model"])
+        # checkpoint = torch.load(PTH_NAME)
+        # self.model.load_state_dict(checkpoint["model"])
         self.model.to(DEVICE)
 
     def listen_to_microphone(self, chunk_size=1024):
@@ -22,18 +22,20 @@ class SerinaApplication:
                             rate=SAMPLE_RATE, input=True,
                             frames_per_buffer=chunk_size)
         CHUNKS_PER_SECOND = int(1 / (chunk_size / SAMPLE_RATE))
-        X_FRAMES = 4 * CHUNKS_PER_SECOND
+        X_CHUNKS = 4 * CHUNKS_PER_SECOND
         i = 0
         print("Listening")
         while True:
-            data = stream.read(chunk_size)
+            data = stream.read(chunk_size, exception_on_overflow=False)
             frames.append(data)
-            if i % CHUNKS_PER_SECOND == 0 and len(frames) > X_FRAMES:
+            i += 1
+            if i % CHUNKS_PER_SECOND == 0 and len(frames) > X_CHUNKS + CHUNKS_PER_SECOND:
+                frames = frames[CHUNKS_PER_SECOND:]
                 audio_data = np.frombuffer(b''.join(frames), dtype=np.int16)
                 # 转换为 torch 张量
                 waveform = torch.from_numpy(audio_data).float()
                 result = self.check(waveform, SAMPLE_RATE)
-                print(f"result is {result}")
+                print(f"result is {result[:3]}")
 
     def check(self, waveform, sample_rate) -> str:
         waveform = standardize(waveform, sample_rate, SAMPLE_RATE)
@@ -46,7 +48,19 @@ class SerinaApplication:
             waveform = waveform_to_spectrogram(waveform, sample_rate)
 
         waveform = spectrogram_to_image_tensor(waveform)
+        print(waveform.shape)
+        X = torch.stack([waveform], 0).to(DEVICE)
         with torch.no_grad():
-            Y = self.model(waveform)
-            predicted = torch.max(Y.data, 1)
-            return index_to_label(predicted)
+            Y = self.model(X)
+            # print(Y)
+            probabilities = torch.nn.functional.softmax(Y, 1)
+            result = []
+            for image_pro in probabilities:
+                img_pros = []
+                for i, p in enumerate(image_pro):
+                    img_pros.append((index_to_label(i), float(p)))
+                img_pros.sort(key=lambda v: v[1], reverse=True)
+                img_pros = img_pros[:3]
+                result.append(img_pros)
+
+            return result
