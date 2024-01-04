@@ -1,4 +1,5 @@
 import os.path
+import time
 
 import pandas as pd
 import torchaudio
@@ -27,6 +28,7 @@ def select(start_percent, end_percent):
 class SoundDataset(Dataset):
     def __init__(self, start_percent, end_percent):
         self.df = select(start_percent, end_percent)
+        self.cache = {}
 
     def __len__(self):
         return len(self.df)
@@ -43,6 +45,11 @@ class SoundDataset(Dataset):
         return waveform, sample_rate, file_path, row.category.values[0]
 
     def get_item_with_file_path(self, item):
+        if item in self.cache:
+            print("cahced")
+            return self.cache[item]
+
+        start = time.time()
         waveform, sample_rate, file_path, category = self.get_raw_info(item)
         waveform = standardize(waveform, sample_rate, SAMPLE_RATE)
 
@@ -55,7 +62,11 @@ class SoundDataset(Dataset):
 
         waveform = spectrogram_to_image_tensor(waveform)
 
-        return waveform, label_to_index(category), file_path
+        result = waveform, label_to_index(category), file_path
+        self.cache[item] = result
+        # start = time.time()
+        print(f"used {time.time() - start}s")
+        return result
 
     def __getitem__(self, item):
         w, l, f = self.get_item_with_file_path(item)
