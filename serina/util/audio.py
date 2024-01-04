@@ -27,7 +27,8 @@ def waveform_to_log_mel_spectrogram(waveform, sample_rate):
 
 def waveform_to_mel_spectrogram(waveform, sample_rate):
     # 转换为梅尔频谱图
-    spectrogram_transform = AT.MelSpectrogram(sample_rate=sample_rate)
+    spectrogram_transform = AT.MelSpectrogram(sample_rate=sample_rate, f_max=18000, n_mels=224, n_fft=4096,
+                                              normalized=True, win_length=2205, hop_length=308)
     mel_spectrogram = spectrogram_transform(waveform)
     return mel_spectrogram
 
@@ -77,6 +78,7 @@ vision_transform = VT.Compose([
     VT.Normalize(mean=[0.485, 0.456, 0.406],  # 图像标准化
                  std=[0.229, 0.224, 0.225])
 ])
+
 
 # vision_transform_without_resize = VT.Compose([
 #     VT.ToPILImage(),
