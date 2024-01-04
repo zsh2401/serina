@@ -7,7 +7,7 @@ SAMPLE_RATE = 44100
 BATCH_SIZE = 64
 # log_mel, mel, spec
 S_TYPE = "mel_spec"
-LEARN_RATE = 0.1
+LEARN_RATE = 0.0001
 # -1 is infinite
 EPOCH = -1
 
