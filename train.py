@@ -25,7 +25,7 @@ model = create_model(get_categories())
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=LEARN_RATE)
 # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
-
+scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=3)
 model.to(DEVICE)
 criterion = criterion.to(DEVICE)
 # scheduler.t
@@ -45,7 +45,7 @@ def resume_state():
     global loss_curve
     epoch = state["epoch"]
     optimizer.load_state_dict(state["optimizer"])
-    # scheduler.load_state_dict(state["scheduler"])
+    scheduler.load_state_dict(state["scheduler"])
     loss_curve = state["loss_curve"]
     accuracy_curve = state["accuracy_curve"]
     print(f"State resumed")
@@ -55,6 +55,7 @@ def validate():
     with torch.no_grad():
         correct = 0
         total = 0
+        val_loss = 0
         for i, (inputs, labels) in enumerate(val_loader):
             labels = labels.to(DEVICE)
             inputs = inputs.to(DEVICE)
@@ -62,12 +63,15 @@ def validate():
             outputs = model(inputs)
             _, predicted = torch.max(outputs.data, 1)  # 获取每个样本的最大logit值索引作为预测结果
 
+            val_loss += criterion(outputs, labels).item()
+
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
 
         accuracy = correct / total
         # print(f'***Validation Set Accuracy: {accuracy * 100:.2f}% ***')
-        return accuracy
+        val_loss /= len(val_loader.dataset)
+        return accuracy, val_loss
 
 
 def train_one_epoch(epoch_str):
@@ -93,7 +97,6 @@ def train_one_epoch(epoch_str):
         return loss
 
 
-
 resume_state()
 print(f"Running on {DEVICE}")
 
@@ -106,19 +109,19 @@ while EPOCH < 0 or epoch < EPOCH:
     print(f"====Epoch {epoch_str}====")
     start = time.time()
     loss = train_one_epoch(epoch_str)
-    # scheduler.step()
 
     loss_curve.append(loss.item())
     print(f'loss: {loss.item()}.')
     print(f"costs {time.time() - start:.2f}s")
-    accuracy = validate()
+    accuracy, loss = validate()
+    scheduler.step(loss, epoch)
     print(f"validation accuracy {accuracy * 100:.2f}%")
     accuracy_curve.append(accuracy * 100)
 
     torch.save({
         "model": model.state_dict(),
         "optimizer": optimizer.state_dict(),
-        # "scheduler": scheduler.state_dict(),
+        "scheduler": scheduler.state_dict(),
         "epoch": epoch,
         "accuracy": accuracy,
         "accuracy_curve": accuracy_curve,
