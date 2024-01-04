@@ -62,10 +62,8 @@ class SoundDataset(Dataset):
 
         waveform = spectrogram_to_image_tensor(waveform)
 
-        result = waveform.to(DEVICE), label_to_index(category), file_path
+        result = waveform, label_to_index(category), file_path
         self.cache[item] = result
-        # start = time.time()
-        # print(f"used {time.time() - start}s")
         return result
 
     def __getitem__(self, item):
