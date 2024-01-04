@@ -55,13 +55,12 @@ def get_mlcc(waveform, sample_rate):
 
 
 def combine_spectrogram_and_mlcc(transformed_spec_tensor, mfcc_tensor):
-
     h_scale = 224 / mfcc_tensor.shape[0]
     w_scale = 224 / mfcc_tensor.shape[1]
     scale_factor = [224 / mfcc_tensor.shape[0], 224 / mfcc_tensor.shape[1]]
 
     # 使用zoom进行重采样
-    mfcc_resized = zoom(mfcc_tensor, (h_scale,w_scale))
+    mfcc_resized = zoom(mfcc_tensor, (h_scale, w_scale))
 
     mfcc_tensor = torch.from_numpy(mfcc_resized).float()
     mfcc_tensor = mfcc_tensor.unsqueeze(0).unsqueeze(0)  # 添加两个新的维度
@@ -72,11 +71,21 @@ def combine_spectrogram_and_mlcc(transformed_spec_tensor, mfcc_tensor):
 vision_transform = VT.Compose([
     VT.ToPILImage(),
     VT.Lambda(lambda x: x.convert('RGB')),
-    VT.Resize((224, 224)),
+    # VT.Resize((224, 224)),
+    VT.Resize((224, 224 * 6)),
     VT.ToTensor(),  # 将图片转换为Tensor
     VT.Normalize(mean=[0.485, 0.456, 0.406],  # 图像标准化
                  std=[0.229, 0.224, 0.225])
 ])
+
+# vision_transform_without_resize = VT.Compose([
+#     VT.ToPILImage(),
+#     VT.Lambda(lambda x: x.convert('RGB')),
+#     VT.Resize((224, 224 * 6)),
+#     VT.ToTensor(),  # 将图片转换为Tensor
+#     VT.Normalize(mean=[0.485, 0.456, 0.406],  # 图像标准化
+#                  std=[0.229, 0.224, 0.225])
+# ])
 
 
 def spectrogram_to_image_tensor(waveform):

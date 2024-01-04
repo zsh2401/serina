@@ -4,9 +4,9 @@ import pandas as pd
 import torchaudio
 from torch.utils.data import Dataset, DataLoader
 
-from scode.util.audio import *
-from scode.config import SAMPLE_RATE, BATCH_SIZE, S_TYPE
-from scode.dataset.label import label_to_index
+from serina.util.audio import *
+from serina.config import SAMPLE_RATE, BATCH_SIZE, S_TYPE
+from serina.dataset.label import label_to_index
 
 df = pd.read_csv(os.path.dirname(__file__) + "/../../ESC-50/meta/esc50.csv")
 

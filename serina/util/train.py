@@ -1,7 +1,7 @@
 import torch
 from progress.bar import Bar
 
-from scode.config import DEVICE
+from serina.config import DEVICE
 
 
 def train_one_epoch(epoch_str, data_loader, model, optimizer, criterion, scheduler=None):

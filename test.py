@@ -2,10 +2,10 @@
 import torch
 from torch.utils.data import DataLoader
 
-from scode.dataset import TestSet
-from scode.dataset.label import get_categories
-from scode.model import create_model
-from scode.config import DEVICE, PTH_NAME
+from serina.dataset import TestSet
+from serina.dataset.label import get_categories
+from serina.model import create_model
+from serina.config import DEVICE, PTH_NAME
 
 with torch.no_grad():
     model = create_model(get_categories())
