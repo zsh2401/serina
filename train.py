@@ -28,6 +28,7 @@ scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
 
 model.to(DEVICE)
 criterion = criterion.to(DEVICE)
+# scheduler.t
 
 epoch = 0
 loss_curve = []
