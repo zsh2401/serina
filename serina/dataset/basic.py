@@ -46,7 +46,7 @@ class SoundDataset(Dataset):
 
     def get_item_with_file_path(self, item):
         if item in self.cache:
-            print("cahced")
+            # print("cahced")
             return self.cache[item]
 
         start = time.time()
@@ -65,7 +65,7 @@ class SoundDataset(Dataset):
         result = waveform, label_to_index(category), file_path
         self.cache[item] = result
         # start = time.time()
-        print(f"used {time.time() - start}s")
+        # print(f"used {time.time() - start}s")
         return result
 
     def __getitem__(self, item):
