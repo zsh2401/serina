@@ -16,7 +16,7 @@ batch_size = 64
 if "BATCH_SIZE" in os.environ:
     batch_size = int(os.environ["BATCH_SIZE"])
 # 玄学
-torch.manual_seed(3407)
+torch.manual_seed(42)
 
 data_loader = DataLoader(TrainSet(), shuffle=True, batch_size=batch_size)
 val_loader = DataLoader(ValidationSet(), shuffle=True, batch_size=batch_size)
