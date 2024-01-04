@@ -24,7 +24,7 @@ val_loader = DataLoader(ValidationSet(), shuffle=True, batch_size=batch_size)
 model = create_model(get_categories())
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=LEARN_RATE)
-scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
+# scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
 
 model.to(DEVICE)
 criterion = criterion.to(DEVICE)
@@ -45,7 +45,7 @@ def resume_state():
     global loss_curve
     epoch = state["epoch"]
     optimizer.load_state_dict(state["optimizer"])
-    scheduler.load_state_dict(state["scheduler"])
+    # scheduler.load_state_dict(state["scheduler"])
     loss_curve = state["loss_curve"]
     accuracy_curve = state["accuracy_curve"]
     print(f"State resumed")
@@ -106,7 +106,7 @@ while EPOCH < 0 or epoch < EPOCH:
     print(f"====Epoch {epoch_str}====")
     start = time.time()
     loss = train_one_epoch(epoch_str)
-    scheduler.step()
+    # scheduler.step()
 
     loss_curve.append(loss.item())
     print(f'loss: {loss.item()}.')
@@ -118,7 +118,7 @@ while EPOCH < 0 or epoch < EPOCH:
     torch.save({
         "model": model.state_dict(),
         "optimizer": optimizer.state_dict(),
-        "scheduler": scheduler.state_dict(),
+        # "scheduler": scheduler.state_dict(),
         "epoch": epoch,
         "accuracy": accuracy,
         "accuracy_curve": accuracy_curve,
