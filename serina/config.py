@@ -20,6 +20,9 @@ if torch.cuda.is_available():
 elif torch.backends.mps.is_available():
     DEVICE = "mps"
 
+if "BATCH_SIZE" in os.environ:
+    BATCH_SIZE = str(os.environ["BATCH_SIZE"])
+
 if "DEVICE" in os.environ:
     DEVICE = str(os.environ["DEVICE"])
 
