@@ -10,7 +10,7 @@ from serina.config import DEVICE, PTH_NAME
 with torch.no_grad():
     model = create_model(get_categories())
 
-    pth = torch.load(PTH_NAME)
+    pth = torch.load(PTH_NAME,map_location=DEVICE)
     model.load_state_dict(pth["model"])
 
     model.to(DEVICE)

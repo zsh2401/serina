@@ -10,9 +10,11 @@ import numpy as np
 class SerinaApplication:
     def __init__(self):
         self.model = create_model(get_categories())
-        # checkpoint = torch.load(PTH_NAME)
-        # self.model.load_state_dict(checkpoint["model"])
+        print(f"Loading {PTH_NAME}")
+        checkpoint = torch.load(PTH_NAME, map_location=DEVICE)
+        self.model.load_state_dict(checkpoint["model"])
         self.model.to(DEVICE)
+        self.model.eval()
 
     def listen_to_microphone(self, chunk_size=1024):
         import pyaudio
@@ -23,6 +25,8 @@ class SerinaApplication:
                             frames_per_buffer=chunk_size)
         CHUNKS_PER_SECOND = int(1 / (chunk_size / SAMPLE_RATE))
         X_CHUNKS = 4 * CHUNKS_PER_SECOND
+        DURATION = X_CHUNKS * (chunk_size / SAMPLE_RATE)
+        print(f"{CHUNKS_PER_SECOND} chunks per second, check once per {X_CHUNKS} (near {DURATION}s)")
         i = 0
         print("Listening")
         while True:
@@ -30,12 +34,16 @@ class SerinaApplication:
             frames.append(data)
             i += 1
             if i % CHUNKS_PER_SECOND == 0 and len(frames) > X_CHUNKS + CHUNKS_PER_SECOND:
+                # print(f"Before cut length {len(frames)} {frames[0]}")
                 frames = frames[CHUNKS_PER_SECOND:]
+                # print(f"After cut length {len(frames)} {frames[0]}")
                 audio_data = np.frombuffer(b''.join(frames), dtype=np.int16)
                 # 转换为 torch 张量
                 waveform = torch.from_numpy(audio_data).float()
+                waveform /= 32768
+                print(waveform)
                 result = self.check(waveform, SAMPLE_RATE)
-                print(f"result is {result[:3]}")
+                print(f"Past {DURATION}s result is {result[:3]}")
 
     def check(self, waveform, sample_rate) -> str:
         waveform = standardize(waveform, sample_rate, SAMPLE_RATE)
@@ -48,7 +56,6 @@ class SerinaApplication:
             waveform = waveform_to_spectrogram(waveform, sample_rate)
 
         waveform = spectrogram_to_image_tensor(waveform)
-        print(waveform.shape)
         X = torch.stack([waveform], 0).to(DEVICE)
         with torch.no_grad():
             Y = self.model(X)
