@@ -6,7 +6,7 @@ import torchaudio
 from torch.utils.data import Dataset, DataLoader
 
 from serina.util.audio import *
-from serina.config import SAMPLE_RATE, BATCH_SIZE, S_TYPE
+from serina.config import SAMPLE_RATE, BATCH_SIZE, S_TYPE, DEVICE
 from serina.dataset.label import label_to_index
 
 df = pd.read_csv(os.path.dirname(__file__) + "/../../ESC-50/meta/esc50.csv")
@@ -62,7 +62,7 @@ class SoundDataset(Dataset):
 
         waveform = spectrogram_to_image_tensor(waveform)
 
-        result = waveform, label_to_index(category), file_path
+        result = waveform.to(DEVICE), label_to_index(category), file_path
         self.cache[item] = result
         # start = time.time()
         # print(f"used {time.time() - start}s")
