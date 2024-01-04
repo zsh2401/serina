@@ -72,8 +72,10 @@ def validate():
 def train_one_epoch(epoch_str):
     with Bar(f'Epoch {epoch_str} Training ', max=len(data_loader), suffix='%(percent)d%%') as bar:
         for i, (inputs, labels) in enumerate(data_loader):
+            start = time.time()
             labels = labels.to(DEVICE)
             inputs = inputs.to(DEVICE)
+            print(f"moving to {DEVICE} costs {time.time() - start}s")
 
             # 梯度清零
             optimizer.zero_grad()
