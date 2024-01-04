@@ -3,8 +3,7 @@ import torch
 from serina import get_categories, PTH_NAME, DEVICE, SAMPLE_RATE, standardize, waveform_to_mel_spectrogram, \
     waveform_to_log_mel_spectrogram, waveform_to_spectrogram, S_TYPE, spectrogram_to_image_tensor, index_to_label
 from serina.model import create_model
-import pyaudio
-import wave
+
 import numpy as np
 
 
@@ -16,6 +15,7 @@ class SerinaApplication:
         self.model.to(DEVICE)
 
     def listen_to_microphone(self, chunk_size=1024):
+        import pyaudio
         audio = pyaudio.PyAudio()
         frames = []
         stream = audio.open(format=pyaudio.paInt16, channels=1,
