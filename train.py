@@ -114,7 +114,8 @@ while EPOCH < 0 or epoch < EPOCH:
     print(f'loss: {loss.item()}.')
     print(f"costs {time.time() - start:.2f}s")
     accuracy, loss = validate()
-    scheduler.step(loss, epoch)
+    scheduler.step()
+    # scheduler.step(loss, epoch)
     print(f"validation accuracy {accuracy * 100:.2f}% loss {loss}")
     accuracy_curve.append(accuracy * 100)
 
