@@ -17,6 +17,7 @@ parser.add_argument("--device", type=str, help="Running on certain device, defau
 parser.add_argument("--learn-rate", type=float, help="Initial learn rate for training", default=0.001)
 parser.add_argument("--spec", type=str, help="The spectrogram type", choices=["mel", "normal", "log-mel"],
                     default='mel')
+parser.add_argument("--optimizer", type=str, help="The optimize", choices=["adam", "sgd"], default="adam")
 subparser = parser.add_subparsers(dest="command")
 p = subparser.add_parser("parse", help="Parse wav file")
 p.add_argument("--file", type=str, required=True)
@@ -42,6 +43,7 @@ serina.config.conf["epoch"] = args.epoch
 serina.config.conf["spec"] = args.spec
 serina.config.conf["sample_rate"] = args.sample_rate
 serina.config.conf["learn_rate"] = args.learn_rate
+serina.config.conf["optimizer"] = args.optimizer
 serina.config.print_conf()
 if args.command == "train":
     train()

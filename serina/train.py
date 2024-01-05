@@ -22,7 +22,12 @@ def train():
 
     model = create_model(get_num_classes())
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=conf["learn_rate"])
+
+    if conf["optimizer"].lower() == "adam":
+        optimizer = optim.Adam(model.parameters(), lr=conf["learn_rate"])
+    else:
+        optimizer = optim.SGD(model.parameters(), lr=conf["learn_rate"])
+    print(f"Using {optimizer} as optimizer")
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
 
     model.to(conf["device"])

@@ -5,6 +5,7 @@ conf = {
     "sample_rate": 44100,
     "batch_size": 64,
     "spec": "mel",
+    "optimizer":"adam",
     "learn_rate": 0.0001,
     "epoch": -1,
 }
