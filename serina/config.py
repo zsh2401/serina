@@ -9,7 +9,7 @@ conf = {
 
 
 def get_pth_name():
-    return "serina-" + ".".join([str(conf[k]) for k in conf]) + ".pth"
+    return "serina-" + ".".join([str(conf[k]) for k in conf if k != "device"]) + ".pth"
 
 
 def print_conf():

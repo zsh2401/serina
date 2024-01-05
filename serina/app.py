@@ -1,6 +1,6 @@
 import torch
 
-from serina import get_categories, standardize, waveform_to_mel_spectrogram, \
+from serina import get_num_classes, standardize, waveform_to_mel_spectrogram, \
     waveform_to_log_mel_spectrogram, waveform_to_spectrogram, spectrogram_to_image_tensor, index_to_label, \
     get_pth_name, conf
 from serina.model import create_model
@@ -10,7 +10,7 @@ import numpy as np
 
 class SerinaApplication:
     def __init__(self):
-        self.model = create_model(get_categories())
+        self.model = create_model(get_num_classes())
         print(f"Loading {get_pth_name()}")
         checkpoint = torch.load(get_pth_name(), map_location=conf["device"])
         self.model.load_state_dict(checkpoint["model"])

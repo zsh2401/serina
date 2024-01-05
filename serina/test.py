@@ -3,12 +3,12 @@ from torch.utils.data import DataLoader
 
 from serina import get_pth_name, conf
 from serina.dataset import TestSet
-from serina.dataset.label import get_categories
+from serina.dataset.label import get_num_classes
 from serina.model import create_model
 
 def test_model():
     with torch.no_grad():
-        model = create_model(get_categories())
+        model = create_model(get_num_classes())
 
         pth = torch.load(get_pth_name(),map_location=conf["device"])
         model.load_state_dict(pth["model"])

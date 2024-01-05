@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 
 from serina import conf, get_pth_name
 from serina.dataset import TrainSet, ValidationSet
-from serina.dataset.label import get_categories
+from serina.dataset.label import get_num_classes
 from serina.model import create_model
 
 import os
@@ -16,60 +16,21 @@ from progress.bar import Bar
 def train():
     torch.manual_seed(42)
     batch_size = conf["batch_size"]
+
     data_loader = DataLoader(TrainSet(), shuffle=True, batch_size=batch_size)
     val_loader = DataLoader(ValidationSet(), shuffle=True, batch_size=batch_size)
 
-    model = create_model(get_categories())
+    model = create_model(get_num_classes())
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=conf["learn_rate"])
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
-    # scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=3)
+
     model.to(conf["device"])
     criterion = criterion.to(conf["device"])
-    # scheduler.t
 
     epoch = 0
     loss_curve = []
     accuracy_curve = []
-
-    def train_one_epoch():
-        with Bar(f'Epoch {epoch_str} Training ', max=len(data_loader), suffix='%(percent)d%%') as bar:
-            for i, (inputs, labels) in enumerate(data_loader):
-                labels = labels.to(conf["device"])
-                inputs = inputs.to(conf["device"])
-
-                # 梯度清零
-                optimizer.zero_grad()
-
-                bar.next(1)
-
-                # 前向 + 反向 + 优化
-                outputs = model(inputs)
-                loss = criterion(outputs, labels)
-                loss.backward()
-                optimizer.step()
-
-            if scheduler is not None:
-                scheduler.step()
-
-            return loss
-
-    def validate():
-        with torch.no_grad():
-            correct = 0
-            total = 0
-            for i, (inputs, labels) in enumerate(val_loader):
-                labels = labels.to(conf["device"])
-                inputs = inputs.to(conf["device"])
-
-                outputs = model(inputs)
-                _, predicted = torch.max(outputs.data, 1)  # 获取每个样本的最大logit值索引作为预测结果
-
-                total += labels.size(0)
-                correct += (predicted == labels).sum().item()
-
-            accuracy = correct / total
-            return accuracy
 
     def resume_state():
         if os.path.isfile(get_pth_name()) is False:
@@ -103,12 +64,12 @@ def train():
                 total += labels.size(0)
                 correct += (predicted == labels).sum().item()
 
-            accuracy = correct / total
+            _accuracy = correct / total
             # print(f'***Validation Set Accuracy: {accuracy * 100:.2f}% ***')
             val_loss /= len(val_loader.dataset)
-            return accuracy, val_loss
+            return _accuracy, val_loss
 
-    def train_one_epoch(epoch_str):
+    def train_one_epoch():
         with Bar(f'Epoch {epoch_str} Training ', max=len(data_loader), suffix='%(percent)d%%') as bar:
             for i, (inputs, labels) in enumerate(data_loader):
                 # start = time.time()
@@ -140,15 +101,17 @@ def train():
             epoch_str = f"[{epoch}/{conf['epoch']}]"
 
         print(f"====Epoch {epoch_str}====")
+        current_learning_rate = optimizer.param_groups[0]['lr']
+        print("Current learning rate:", current_learning_rate)
         start = time.time()
-        loss = train_one_epoch(epoch_str)
+        loss = train_one_epoch()
 
         loss_curve.append(loss.item())
-        print(f'loss: {loss.item()}.')
+        print(f'training loss: {loss.item()}.')
         print(f"costs {time.time() - start:.2f}s")
         accuracy, loss = validate()
         scheduler.step()
-        # scheduler.step(loss, epoch)
+
         print(f"validation accuracy {accuracy * 100:.2f}% loss {loss}")
         accuracy_curve.append(accuracy * 100)
 

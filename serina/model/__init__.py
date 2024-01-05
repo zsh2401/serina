@@ -3,7 +3,7 @@ from torch import nn as nn
 from .model import *
 
 def create_model(num_classes):
-    model = torchvision.models.resnet18(pretrained=True)
+    model = torchvision.models.resnet101(pretrained=True)
     # model = torchvision.models.resnet50(pretrained=True)
     # model.conv1 = nn.Conv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
     # 使用自适应平均池化以确保全连接层的输入尺寸是固定的

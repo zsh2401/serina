@@ -44,7 +44,7 @@ def index_to_label(index: int):
     return data_i2l[index]
 
 
-def get_categories():
+def get_num_classes():
     __prepare()
     return len(data_i2l)
 

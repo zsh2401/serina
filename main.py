@@ -37,6 +37,7 @@ elif torch.backends.mps.is_available():
 else:
     serina.config.conf["device"] = "cpu"
 
+serina.config.conf["batch_size"] = args.batch_size
 serina.config.conf["epoch"] = args.epoch
 serina.config.conf["spec"] = args.spec
 serina.config.conf["sample_rate"] = args.sample_rate
