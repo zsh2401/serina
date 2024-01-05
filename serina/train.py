@@ -4,7 +4,8 @@ import time
 import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader
-from serina.config import DEVICE, PTH_NAME, LEARN_RATE, EPOCH
+
+from serina import conf, get_pth_name
 from serina.dataset import TrainSet, ValidationSet
 from serina.dataset.label import get_categories
 from serina.model import create_model
@@ -15,6 +16,7 @@ from progress.bar import Bar
 batch_size = 64
 if "BATCH_SIZE" in os.environ:
     batch_size = int(os.environ["BATCH_SIZE"])
+
 # 玄学
 torch.manual_seed(42)
 
@@ -23,11 +25,11 @@ val_loader = DataLoader(ValidationSet(), shuffle=True, batch_size=batch_size)
 
 model = create_model(get_categories())
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=LEARN_RATE)
+optimizer = optim.Adam(model.parameters(), lr=conf.learn_rate)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
 # scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=3)
-model.to(DEVICE)
-criterion = criterion.to(DEVICE)
+model.to(conf["device"])
+criterion = criterion.to(conf["device"])
 # scheduler.t
 
 epoch = 0
@@ -35,10 +37,52 @@ loss_curve = []
 accuracy_curve = []
 
 
+
+def train_one_epoch(epoch_str, data_loader, model, optimizer, criterion, scheduler=None):
+    with Bar(f'Epoch {epoch_str} Training ', max=len(data_loader), suffix='%(percent)d%%') as bar:
+        for i, (inputs, labels) in enumerate(data_loader):
+            labels = labels.to(conf["device"])
+            inputs = inputs.to(conf["device"])
+
+            # 梯度清零
+            optimizer.zero_grad()
+
+            bar.next(1)
+
+            # 前向 + 反向 + 优化
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+
+        if scheduler is not None:
+            scheduler.step()
+
+        return loss
+
+
+def validate(val_loader, model):
+    with torch.no_grad():
+        correct = 0
+        total = 0
+        for i, (inputs, labels) in enumerate(val_loader):
+            labels = labels.to(conf["device"])
+            inputs = inputs.to(conf["device"])
+
+            outputs = model(inputs)
+            _, predicted = torch.max(outputs.data, 1)  # 获取每个样本的最大logit值索引作为预测结果
+
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+
+        accuracy = correct / total
+        return accuracy
+
+
 def resume_state():
-    if os.path.isfile(PTH_NAME) is False:
+    if os.path.isfile(get_pth_name()) is False:
         return
-    state = torch.load(PTH_NAME)
+    state = torch.load(get_pth_name())
     model.load_state_dict(state["model"])
     global epoch
     global accuracy_curve
@@ -57,8 +101,8 @@ def validate():
         total = 0
         val_loss = 0
         for i, (inputs, labels) in enumerate(val_loader):
-            labels = labels.to(DEVICE)
-            inputs = inputs.to(DEVICE)
+            labels = labels.to(conf["device"])
+            inputs = inputs.to(conf["device"])
 
             outputs = model(inputs)
             _, predicted = torch.max(outputs.data, 1)  # 获取每个样本的最大logit值索引作为预测结果
@@ -78,8 +122,8 @@ def train_one_epoch(epoch_str):
     with Bar(f'Epoch {epoch_str} Training ', max=len(data_loader), suffix='%(percent)d%%') as bar:
         for i, (inputs, labels) in enumerate(data_loader):
             # start = time.time()
-            labels = labels.to(DEVICE)
-            inputs = inputs.to(DEVICE)
+            labels = labels.to(conf["device"])
+            inputs = inputs.to(conf["device"])
             # print(f"moving to {DEVICE} costs {time.time() - start}s")
 
             # 梯度清零
@@ -97,14 +141,15 @@ def train_one_epoch(epoch_str):
         return loss
 
 
-resume_state()
-print(f"Running on {DEVICE}")
 
-while EPOCH < 0 or epoch < EPOCH:
+resume_state()
+print(f"Running on {conf['device']}")
+
+while conf["epoch"] < 0 or epoch < conf["epoch"]:
     epoch += 1
     epoch_str = epoch
-    if EPOCH > 0:
-        epoch_str = f"[{epoch}/{EPOCH}]"
+    if conf["epoch"] > 0:
+        epoch_str = f"[{epoch}/{conf['epoch']}]"
 
     print(f"====Epoch {epoch_str}====")
     start = time.time()
@@ -127,6 +172,6 @@ while EPOCH < 0 or epoch < EPOCH:
         "accuracy": accuracy,
         "accuracy_curve": accuracy_curve,
         "loss_curve": loss_curve
-    }, PTH_NAME)
+    }, get_pth_name())
 
     print("Saved")

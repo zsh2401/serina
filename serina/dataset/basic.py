@@ -5,8 +5,8 @@ import pandas as pd
 import torchaudio
 from torch.utils.data import Dataset, DataLoader
 
+from serina.config import conf
 from serina.util.audio import *
-from serina.config import SAMPLE_RATE, BATCH_SIZE, S_TYPE, DEVICE
 from serina.dataset.label import label_to_index
 
 df = pd.read_csv(os.path.dirname(__file__) + "/../../ESC-50/meta/esc50.csv")
@@ -34,7 +34,7 @@ class SoundDataset(Dataset):
         return len(self.df)
 
     def to_data_loader(self):
-        return DataLoader(self, shuffle=True, batch_size=BATCH_SIZE)
+        return DataLoader(self, shuffle=True, batch_size=conf["batch_size"])
 
     def get_raw_info(self, item):
         row = self.df.take([item], axis=0)
@@ -51,11 +51,11 @@ class SoundDataset(Dataset):
 
         start = time.time()
         waveform, sample_rate, file_path, category = self.get_raw_info(item)
-        waveform = standardize(waveform, sample_rate, SAMPLE_RATE)
+        waveform = standardize(waveform, sample_rate, conf["sample_rate"])
 
-        if S_TYPE == "mel":
+        if conf["spec"] == "mel":
             waveform = waveform_to_mel_spectrogram(waveform, sample_rate)
-        elif S_TYPE == "log_mel":
+        elif conf["spec"] == "log_mel":
             waveform = waveform_to_log_mel_spectrogram(waveform, sample_rate)
         else:
             waveform = waveform_to_spectrogram(waveform, sample_rate)

@@ -1,7 +1,8 @@
 import torch
 
-from serina import get_categories, PTH_NAME, DEVICE, SAMPLE_RATE, standardize, waveform_to_mel_spectrogram, \
-    waveform_to_log_mel_spectrogram, waveform_to_spectrogram, S_TYPE, spectrogram_to_image_tensor, index_to_label
+from serina import get_categories, standardize, waveform_to_mel_spectrogram, \
+    waveform_to_log_mel_spectrogram, waveform_to_spectrogram, spectrogram_to_image_tensor, index_to_label, \
+    get_pth_name, conf
 from serina.model import create_model
 
 import numpy as np
@@ -10,22 +11,23 @@ import numpy as np
 class SerinaApplication:
     def __init__(self):
         self.model = create_model(get_categories())
-        print(f"Loading {PTH_NAME}")
-        checkpoint = torch.load(PTH_NAME, map_location=DEVICE)
+        print(f"Loading {get_pth_name()}")
+        checkpoint = torch.load(get_pth_name(), map_location=conf["device"])
         self.model.load_state_dict(checkpoint["model"])
-        self.model.to(DEVICE)
+        self.model.to(conf["device"])
         self.model.eval()
 
     def listen_to_microphone(self, chunk_size=1024):
         import pyaudio
         audio = pyaudio.PyAudio()
         frames = []
+        sample_rate = conf["sample_rate"]
         stream = audio.open(format=pyaudio.paInt16, channels=1,
-                            rate=SAMPLE_RATE, input=True,
+                            rate=sample_rate, input=True,
                             frames_per_buffer=chunk_size)
-        CHUNKS_PER_SECOND = int(1 / (chunk_size / SAMPLE_RATE))
+        CHUNKS_PER_SECOND = int(1 / (chunk_size / sample_rate))
         X_CHUNKS = 4 * CHUNKS_PER_SECOND
-        DURATION = X_CHUNKS * (chunk_size / SAMPLE_RATE)
+        DURATION = X_CHUNKS * (chunk_size / sample_rate)
         print(f"{CHUNKS_PER_SECOND} chunks per second, check once per {X_CHUNKS} (near {DURATION}s)")
         i = 0
         print("Listening")
@@ -42,32 +44,32 @@ class SerinaApplication:
                 waveform = torch.from_numpy(audio_data).float()
                 waveform /= 32768
                 print(waveform)
-                result = self.check(waveform, SAMPLE_RATE)
+                result = self.check(waveform, sample_rate)
                 print(f"Past {DURATION}s result is {result[:3]}")
 
     def check(self, waveform, sample_rate) -> str:
-        waveform = standardize(waveform, sample_rate, SAMPLE_RATE)
+        waveform = standardize(waveform, sample_rate, conf["sample_rate"])
 
-        if S_TYPE == "mel":
+        if conf["spec"] == "mel":
             waveform = waveform_to_mel_spectrogram(waveform, sample_rate)
-        elif S_TYPE == "log_mel":
+        elif conf["spec"] == "log-mel":
             waveform = waveform_to_log_mel_spectrogram(waveform, sample_rate)
         else:
             waveform = waveform_to_spectrogram(waveform, sample_rate)
 
         waveform = spectrogram_to_image_tensor(waveform)
-        X = torch.stack([waveform], 0).to(DEVICE)
+        X = torch.stack([waveform], 0).to(conf["device"])
         with torch.no_grad():
             Y = self.model(X)
-            # print(Y)
-            probabilities = torch.nn.functional.softmax(Y, 1)
-            result = []
-            for image_pro in probabilities:
-                img_pros = []
-                for i, p in enumerate(image_pro):
-                    img_pros.append((index_to_label(i), float(p)))
-                img_pros.sort(key=lambda v: v[1], reverse=True)
-                img_pros = img_pros[:3]
-                result.append(img_pros)
+        # print(Y)
+        probabilities = torch.nn.functional.softmax(Y, 1)
+        result = []
+        for image_pro in probabilities:
+            img_pros = []
+        for i, p in enumerate(image_pro):
+            img_pros.append((index_to_label(i), float(p)))
+        img_pros.sort(key=lambda v: v[1], reverse=True)
+        img_pros = img_pros[:3]
+        result.append(img_pros)
 
-            return result
+        return result
