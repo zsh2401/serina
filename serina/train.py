@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import time
 
 import torch
@@ -13,165 +12,154 @@ from serina.model import create_model
 import os
 from progress.bar import Bar
 
-batch_size = 64
-if "BATCH_SIZE" in os.environ:
-    batch_size = int(os.environ["BATCH_SIZE"])
 
-# 玄学
-torch.manual_seed(42)
+def train():
+    torch.manual_seed(42)
+    batch_size = conf["batch_size"]
+    data_loader = DataLoader(TrainSet(), shuffle=True, batch_size=batch_size)
+    val_loader = DataLoader(ValidationSet(), shuffle=True, batch_size=batch_size)
 
-data_loader = DataLoader(TrainSet(), shuffle=True, batch_size=batch_size)
-val_loader = DataLoader(ValidationSet(), shuffle=True, batch_size=batch_size)
+    model = create_model(get_categories())
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=conf["learn_rate"])
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
+    # scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=3)
+    model.to(conf["device"])
+    criterion = criterion.to(conf["device"])
+    # scheduler.t
 
-model = create_model(get_categories())
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=conf.learn_rate)
-scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
-# scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=3)
-model.to(conf["device"])
-criterion = criterion.to(conf["device"])
-# scheduler.t
+    epoch = 0
+    loss_curve = []
+    accuracy_curve = []
 
-epoch = 0
-loss_curve = []
-accuracy_curve = []
+    def train_one_epoch():
+        with Bar(f'Epoch {epoch_str} Training ', max=len(data_loader), suffix='%(percent)d%%') as bar:
+            for i, (inputs, labels) in enumerate(data_loader):
+                labels = labels.to(conf["device"])
+                inputs = inputs.to(conf["device"])
 
+                # 梯度清零
+                optimizer.zero_grad()
 
+                bar.next(1)
 
-def train_one_epoch(epoch_str, data_loader, model, optimizer, criterion, scheduler=None):
-    with Bar(f'Epoch {epoch_str} Training ', max=len(data_loader), suffix='%(percent)d%%') as bar:
-        for i, (inputs, labels) in enumerate(data_loader):
-            labels = labels.to(conf["device"])
-            inputs = inputs.to(conf["device"])
+                # 前向 + 反向 + 优化
+                outputs = model(inputs)
+                loss = criterion(outputs, labels)
+                loss.backward()
+                optimizer.step()
 
-            # 梯度清零
-            optimizer.zero_grad()
+            if scheduler is not None:
+                scheduler.step()
 
-            bar.next(1)
+            return loss
 
-            # 前向 + 反向 + 优化
-            outputs = model(inputs)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
+    def validate():
+        with torch.no_grad():
+            correct = 0
+            total = 0
+            for i, (inputs, labels) in enumerate(val_loader):
+                labels = labels.to(conf["device"])
+                inputs = inputs.to(conf["device"])
 
-        if scheduler is not None:
-            scheduler.step()
+                outputs = model(inputs)
+                _, predicted = torch.max(outputs.data, 1)  # 获取每个样本的最大logit值索引作为预测结果
 
-        return loss
+                total += labels.size(0)
+                correct += (predicted == labels).sum().item()
 
+            accuracy = correct / total
+            return accuracy
 
-def validate(val_loader, model):
-    with torch.no_grad():
-        correct = 0
-        total = 0
-        for i, (inputs, labels) in enumerate(val_loader):
-            labels = labels.to(conf["device"])
-            inputs = inputs.to(conf["device"])
+    def resume_state():
+        if os.path.isfile(get_pth_name()) is False:
+            return
+        state = torch.load(get_pth_name())
+        model.load_state_dict(state["model"])
+        global epoch
+        global accuracy_curve
+        global loss_curve
+        epoch = state["epoch"]
+        optimizer.load_state_dict(state["optimizer"])
+        scheduler.load_state_dict(state["scheduler"])
+        loss_curve = state["loss_curve"]
+        accuracy_curve = state["accuracy_curve"]
+        print(f"State resumed")
 
-            outputs = model(inputs)
-            _, predicted = torch.max(outputs.data, 1)  # 获取每个样本的最大logit值索引作为预测结果
+    def validate():
+        with torch.no_grad():
+            correct = 0
+            total = 0
+            val_loss = 0
+            for i, (inputs, labels) in enumerate(val_loader):
+                labels = labels.to(conf["device"])
+                inputs = inputs.to(conf["device"])
 
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
+                outputs = model(inputs)
+                _, predicted = torch.max(outputs.data, 1)  # 获取每个样本的最大logit值索引作为预测结果
 
-        accuracy = correct / total
-        return accuracy
+                val_loss += criterion(outputs, labels).item()
 
+                total += labels.size(0)
+                correct += (predicted == labels).sum().item()
 
-def resume_state():
-    if os.path.isfile(get_pth_name()) is False:
-        return
-    state = torch.load(get_pth_name())
-    model.load_state_dict(state["model"])
-    global epoch
-    global accuracy_curve
-    global loss_curve
-    epoch = state["epoch"]
-    optimizer.load_state_dict(state["optimizer"])
-    scheduler.load_state_dict(state["scheduler"])
-    loss_curve = state["loss_curve"]
-    accuracy_curve = state["accuracy_curve"]
-    print(f"State resumed")
+            accuracy = correct / total
+            # print(f'***Validation Set Accuracy: {accuracy * 100:.2f}% ***')
+            val_loss /= len(val_loader.dataset)
+            return accuracy, val_loss
 
+    def train_one_epoch(epoch_str):
+        with Bar(f'Epoch {epoch_str} Training ', max=len(data_loader), suffix='%(percent)d%%') as bar:
+            for i, (inputs, labels) in enumerate(data_loader):
+                # start = time.time()
+                labels = labels.to(conf["device"])
+                inputs = inputs.to(conf["device"])
+                # print(f"moving to {DEVICE} costs {time.time() - start}s")
 
-def validate():
-    with torch.no_grad():
-        correct = 0
-        total = 0
-        val_loss = 0
-        for i, (inputs, labels) in enumerate(val_loader):
-            labels = labels.to(conf["device"])
-            inputs = inputs.to(conf["device"])
+                # 梯度清零
+                optimizer.zero_grad()
 
-            outputs = model(inputs)
-            _, predicted = torch.max(outputs.data, 1)  # 获取每个样本的最大logit值索引作为预测结果
+                bar.next(1)
 
-            val_loss += criterion(outputs, labels).item()
+                # 前向 + 反向 + 优化
+                outputs = model(inputs)
+                loss = criterion(outputs, labels)
+                loss.backward()
+                optimizer.step()
 
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
+                # print(f'Epoch: {epoch + 1}, Batch: {i + 1}, Loss: {loss.item()}')
+            return loss
 
-        accuracy = correct / total
-        # print(f'***Validation Set Accuracy: {accuracy * 100:.2f}% ***')
-        val_loss /= len(val_loader.dataset)
-        return accuracy, val_loss
+    resume_state()
+    print(f"Running on {conf['device']}")
 
+    while conf["epoch"] < 0 or epoch < conf["epoch"]:
+        epoch += 1
+        epoch_str = epoch
+        if conf["epoch"] > 0:
+            epoch_str = f"[{epoch}/{conf['epoch']}]"
 
-def train_one_epoch(epoch_str):
-    with Bar(f'Epoch {epoch_str} Training ', max=len(data_loader), suffix='%(percent)d%%') as bar:
-        for i, (inputs, labels) in enumerate(data_loader):
-            # start = time.time()
-            labels = labels.to(conf["device"])
-            inputs = inputs.to(conf["device"])
-            # print(f"moving to {DEVICE} costs {time.time() - start}s")
+        print(f"====Epoch {epoch_str}====")
+        start = time.time()
+        loss = train_one_epoch(epoch_str)
 
-            # 梯度清零
-            optimizer.zero_grad()
+        loss_curve.append(loss.item())
+        print(f'loss: {loss.item()}.')
+        print(f"costs {time.time() - start:.2f}s")
+        accuracy, loss = validate()
+        scheduler.step()
+        # scheduler.step(loss, epoch)
+        print(f"validation accuracy {accuracy * 100:.2f}% loss {loss}")
+        accuracy_curve.append(accuracy * 100)
 
-            bar.next(1)
+        torch.save({
+            "model": model.state_dict(),
+            "optimizer": optimizer.state_dict(),
+            "scheduler": scheduler.state_dict(),
+            "epoch": epoch,
+            "accuracy": accuracy,
+            "accuracy_curve": accuracy_curve,
+            "loss_curve": loss_curve
+        }, get_pth_name())
 
-            # 前向 + 反向 + 优化
-            outputs = model(inputs)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
-
-            # print(f'Epoch: {epoch + 1}, Batch: {i + 1}, Loss: {loss.item()}')
-        return loss
-
-
-
-resume_state()
-print(f"Running on {conf['device']}")
-
-while conf["epoch"] < 0 or epoch < conf["epoch"]:
-    epoch += 1
-    epoch_str = epoch
-    if conf["epoch"] > 0:
-        epoch_str = f"[{epoch}/{conf['epoch']}]"
-
-    print(f"====Epoch {epoch_str}====")
-    start = time.time()
-    loss = train_one_epoch(epoch_str)
-
-    loss_curve.append(loss.item())
-    print(f'loss: {loss.item()}.')
-    print(f"costs {time.time() - start:.2f}s")
-    accuracy, loss = validate()
-    scheduler.step()
-    # scheduler.step(loss, epoch)
-    print(f"validation accuracy {accuracy * 100:.2f}% loss {loss}")
-    accuracy_curve.append(accuracy * 100)
-
-    torch.save({
-        "model": model.state_dict(),
-        "optimizer": optimizer.state_dict(),
-        "scheduler": scheduler.state_dict(),
-        "epoch": epoch,
-        "accuracy": accuracy,
-        "accuracy_curve": accuracy_curve,
-        "loss_curve": loss_curve
-    }, get_pth_name())
-
-    print("Saved")
+        print(f"Model saved as {get_pth_name()} size: {os.path.getsize(get_pth_name())}")

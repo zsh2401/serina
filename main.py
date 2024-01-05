@@ -3,6 +3,11 @@ import argparse
 
 import torch
 
+from serina import SerinaApplication
+from serina.predict import predict
+from serina.test import test_model
+from serina.train import train
+
 parser = argparse.ArgumentParser(description='Serina Sound Classification')
 
 parser.add_argument("--batch-size", type=int, help="The batch size for training, default is 64.", default=64)
@@ -11,8 +16,10 @@ parser.add_argument("--epoch", type=int, help="Training epochs, -1 stand for inf
 parser.add_argument("--device", type=str, help="Running on certain device, default is auto.", default="auto")
 parser.add_argument("--learn-rate", type=float, help="Initial learn rate for training", default=0.001)
 parser.add_argument("--spec", type=str, help="The spectrogram type", choices=["mel", "normal", "log-mel"],
-                    default='mel-spec')
+                    default='mel')
 subparser = parser.add_subparsers(dest="command")
+p = subparser.add_parser("parse", help="Parse wav file")
+p.add_argument("--file", type=str, required=True)
 subparser.add_parser("train", help="Train model")
 subparser.add_parser("test", help="Test model")
 subparser.add_parser("listen", help="Start classification with microphone and trained model")
@@ -36,4 +43,11 @@ serina.config.conf["sample_rate"] = args.sample_rate
 serina.config.conf["learn_rate"] = args.learn_rate
 serina.config.print_conf()
 if args.command == "train":
-    import serina.train
+    train()
+elif args.command == "test":
+    test_model()
+elif args.command == "listen":
+    app = SerinaApplication()
+    app.listen_to_microphone()
+elif args.command == "parse":
+    predict(args.file)
