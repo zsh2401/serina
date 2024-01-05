@@ -1,8 +1,8 @@
 import torch
 
-from serina import get_num_classes, standardize, waveform_to_mel_spectrogram, \
-    waveform_to_log_mel_spectrogram, waveform_to_spectrogram, spectrogram_to_image_tensor, index_to_label, \
+from serina import get_num_classes, index_to_label, \
     get_pth_name, conf
+from serina.dataset.audio import standardize, build_transform
 from serina.model import create_model
 
 import numpy as np
@@ -49,20 +49,13 @@ class SerinaApplication:
 
     def check(self, waveform, sample_rate) -> str:
         waveform = standardize(waveform, sample_rate, conf["sample_rate"])
+        waveform = build_transform()(waveform)
+        inputs = torch.stack([waveform], 0).to(conf["device"])
 
-        if conf["spec"] == "mel":
-            waveform = waveform_to_mel_spectrogram(waveform, sample_rate)
-        elif conf["spec"] == "log-mel":
-            waveform = waveform_to_log_mel_spectrogram(waveform, sample_rate)
-        else:
-            waveform = waveform_to_spectrogram(waveform, sample_rate)
-
-        waveform = spectrogram_to_image_tensor(waveform)
-        X = torch.stack([waveform], 0).to(conf["device"])
         with torch.no_grad():
-            Y = self.model(X)
-        # print(Y)
-        probabilities = torch.nn.functional.softmax(Y, 1)
+            outputs = self.model(inputs)
+
+        probabilities = torch.nn.functional.softmax(outputs, 1)
         result = []
         for image_pro in probabilities:
             img_pros = []

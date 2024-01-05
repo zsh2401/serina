@@ -5,6 +5,8 @@ import torchaudio.transforms as AT
 import torchvision.transforms as VT
 from scipy.ndimage import zoom
 
+from serina.config import conf
+
 
 def standardize(waveform, sample_rate, target_sample_rate):
     if sample_rate != target_sample_rate:
@@ -28,7 +30,7 @@ def waveform_to_log_mel_spectrogram(waveform, sample_rate):
 def waveform_to_mel_spectrogram(waveform, sample_rate):
     # 转换为梅尔频谱图
     spectrogram_transform = AT.MelSpectrogram(sample_rate=sample_rate, f_max=18000, n_mels=224, n_fft=4096,
-                                               win_length=2205, hop_length=308)
+                                              win_length=2205, hop_length=308)
     mel_spectrogram = spectrogram_transform(waveform)
     return mel_spectrogram
 
@@ -69,26 +71,19 @@ def combine_spectrogram_and_mlcc(transformed_spec_tensor, mfcc_tensor):
     return torch.stack([transformed_spec_tensor, mfcc_tensor], dim=0)
 
 
-vision_transform = VT.Compose([
-    VT.ToPILImage(),
-    VT.Lambda(lambda x: x.convert('RGB')),
-    VT.Resize((224, 224 * 3)),
-    # VT.Resize((224, 224 * 6)),
-    VT.ToTensor(),  # 将图片转换为Tensor
-    VT.Normalize(mean=[0.485, 0.456, 0.406],  # 图像标准化
-                 std=[0.229, 0.224, 0.225])
-])
+def build_transform():
+    sample_rate = conf["sample_rate"]
+    spec_t = AT.MelSpectrogram(sample_rate=sample_rate, f_max=18000, n_mels=224, n_fft=4096,
+                               win_length=2205, hop_length=308)
+    if conf["spec"] == "spec":
+        spec_t = AT.Spectrogram(sample_rate)
 
-
-# vision_transform_without_resize = VT.Compose([
-#     VT.ToPILImage(),
-#     VT.Lambda(lambda x: x.convert('RGB')),
-#     VT.Resize((224, 224 * 6)),
-#     VT.ToTensor(),  # 将图片转换为Tensor
-#     VT.Normalize(mean=[0.485, 0.456, 0.406],  # 图像标准化
-#                  std=[0.229, 0.224, 0.225])
-# ])
-
-
-def spectrogram_to_image_tensor(waveform):
-    return vision_transform(waveform)
+    return VT.Compose([
+        spec_t,
+        VT.ToPILImage(),
+        VT.Lambda(lambda x: x.convert('RGB')),
+        VT.Resize((224, 224)),
+        VT.ToTensor(),  # 将图片转换为Tensor
+        VT.Normalize(mean=[0.485, 0.456, 0.406],  # 图像标准化
+                     std=[0.229, 0.224, 0.225])
+    ])
