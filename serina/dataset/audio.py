@@ -75,14 +75,19 @@ def build_transform():
     sample_rate = conf["sample_rate"]
     spec_t = AT.MelSpectrogram(sample_rate=sample_rate, f_max=18000, n_mels=224, n_fft=4096,
                                win_length=2205, hop_length=308)
+    # AT.
     if conf["spec"] == "spec":
         spec_t = AT.Spectrogram(sample_rate)
+    elif conf["spec"] == "mfcc":
+        spec_t = AT.MFCC(sample_rate=sample_rate)
 
     return VT.Compose([
         spec_t,
         VT.ToPILImage(),
         VT.Lambda(lambda x: x.convert('RGB')),
-        VT.Resize((224, 224)),
+        # VT.Resize((224, 224)),
+        VT.Resize(224),
+        VT.CenterCrop(224),
         VT.ToTensor(),  # 将图片转换为Tensor
         # VT.Normalize(mean=[0.485, 0.456, 0.406],  # 图像标准化
         #              std=[0.229, 0.224, 0.225])
