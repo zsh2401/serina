@@ -85,7 +85,11 @@ def build_transform():
         spec_t,
         VT.ToPILImage(),
         VT.Lambda(lambda x: x.convert('RGB')),
-        VT.Resize((256, 512)),
+        VT.Resize((224, 224 * 4)),
+        # VT.Resize((224, 224)),
+        # VT.RandomHorizontalFlip(),
+        # VT.RandomRotation(10),
+        # VT.RandomResizedCrop(224),
         # VT.Resize(512),
         # VT.CenterCrop(512),
         VT.ToTensor(),  # 将图片转换为Tensor

@@ -6,7 +6,7 @@ import torchvision.transforms as VT
 import torchaudio.transforms as AT
 
 from serina.config import conf
-from serina.dataset.label import  label_to_index
+from serina.dataset.label import label_to_index
 from serina.dataset.audio import build_transform
 import pandas as pd
 
@@ -69,9 +69,10 @@ class TransformedWaveSet(RawWaveSet):
         return tensor, sample_rate, path, category
 
 
-class EasySet(TransformedWaveSet):
+class TransformationCachedWaveSet(TransformedWaveSet):
     def __init__(self, start_percent, end_percent):
-        super().__init__(transform=build_transform(), start_percent=start_percent, end_percent=end_percent)
+        super().__init__(transform=build_transform(),
+                         start_percent=start_percent, end_percent=end_percent)
         self.cache = {}
 
     def __getitem__(self, item):
@@ -79,7 +80,24 @@ class EasySet(TransformedWaveSet):
             return self.cache[item]
 
         tensor, sample_rate, path, category = super().__getitem__(item)
-
         r = tensor, label_to_index(category)
         self.cache[item] = r
         return r
+
+
+class TransformEveryTimeSet(ResampledWaveSet):
+    def __init__(self, start_percent, end_percent):
+        super().__init__(target_sample_rate=44100, start_percent=start_percent, end_percent=end_percent)
+        self.cache = {}
+        self.transform = build_transform()
+
+    def __getitem__(self, item):
+        if item in self.cache:
+            waveform, sample_rate, path, category = self.cache[item]
+        else:
+            waveform, sample_rate, path, category = super().__getitem__(item)
+            self.cache[item] = (waveform, sample_rate, path, category)
+
+        tensor = self.transform(waveform)
+
+        return tensor, label_to_index(category)

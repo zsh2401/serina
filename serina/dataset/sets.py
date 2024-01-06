@@ -1,16 +1,16 @@
-from serina.dataset.hir import EasySet
+from serina.dataset.hir import TransformationCachedWaveSet
 
 
-class TrainSet(EasySet):
+class TrainSet(TransformationCachedWaveSet):
     def __init__(self):
         super().__init__(0, 0.6)
 
 
-class ValidationSet(EasySet):
+class ValidationSet(TransformationCachedWaveSet):
     def __init__(self):
         super().__init__(0.6, 0.8)
 
 
-class TestSet(EasySet):
+class TestSet(TransformationCachedWaveSet):
     def __init__(self):
         super().__init__(0.8, 1)

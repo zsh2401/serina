@@ -24,7 +24,7 @@ def train():
     criterion = nn.CrossEntropyLoss()
 
     if conf["optimizer"].lower() == "adam":
-        optimizer = optim.Adam(model.parameters(), lr=conf["learn_rate"])
+        optimizer = optim.Adam(model.parameters(), lr=conf["learn_rate"],weight_decay=1e-5)
     else:
         optimizer = optim.SGD(model.parameters(), lr=conf["learn_rate"])
     print(f"Using {optimizer} as optimizer")
