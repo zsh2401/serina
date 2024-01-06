@@ -73,30 +73,48 @@ def combine_spectrogram_and_mlcc(transformed_spec_tensor, mfcc_tensor):
 
 def build_transform():
     sample_rate = conf["sample_rate"]
-    spec_t = AT.MelSpectrogram(sample_rate=sample_rate, f_max=18000, n_mels=224, n_fft=4096,
-                               win_length=2205, hop_length=308)
-    # AT.
-    if conf["spec"] == "spec":
-        spec_t = AT.Spectrogram(sample_rate)
-    elif conf["spec"] == "mfcc":
-        spec_t = AT.MFCC(sample_rate=sample_rate)
-    elif conf["spec"] == "log-mel":
-        spec_t = VT.Compose([
-            spec_t,
-            AT.AmplitudeToDB()
+    strategy = conf["spec"]
+    if strategy == "spec":
+        return VT.Compose([
+            AT.Spectrogram(),
+            VT.ToPILImage(),
+            VT.Lambda(lambda x: x.convert('RGB')),
+            VT.Resize((224, 224)),
+            VT.ToTensor(),  # 将图片转换为Tensor
+            VT.Normalize(mean=[0.485, 0.456, 0.406],  # 图像标准化
+                         std=[0.229, 0.224, 0.225])
         ])
-    return VT.Compose([
-        spec_t,
-        VT.ToPILImage(),
-        VT.Lambda(lambda x: x.convert('RGB')),
-        VT.Resize((224, 224 * 4)),
-        # VT.Resize((224, 224)),
-        # VT.RandomHorizontalFlip(),
-        # VT.RandomRotation(10),
-        # VT.RandomResizedCrop(224),
-        # VT.Resize(512),
-        # VT.CenterCrop(512),
-        VT.ToTensor(),  # 将图片转换为Tensor
-        VT.Normalize(mean=[0.485, 0.456, 0.406],  # 图像标准化
-                     std=[0.229, 0.224, 0.225])
-    ])
+    elif strategy == "mfcc":
+        return VT.Compose([
+            AT.MFCC(sample_rate=sample_rate, n_mfcc=13),
+            VT.Lambda(lambda x: x.repeat(3,1,1)),
+            VT.Resize((224, 224)),
+        ])
+    elif strategy == "log-mel":
+        return VT.Compose([
+            AT.MelSpectrogram(sample_rate=sample_rate, f_max=18000, n_mels=224, n_fft=4096,
+                              win_length=2205, hop_length=308),
+            AT.AmplitudeToDB(),
+            VT.ToPILImage(),
+            VT.Lambda(lambda x: x.convert('RGB')),
+            VT.Resize((224, 224)),
+            VT.ToTensor(),  # 将图片转换为Tensor
+            VT.Normalize(mean=[0.485, 0.456, 0.406],  # 图像标准化
+                         std=[0.229, 0.224, 0.225])
+        ])
+    elif strategy == "mfcc":
+        return VT.Compose([
+            AT.MFCC(sample_rate=sample_rate),
+            VT.Lambda(lambda x: x.unsqueeze(0).repeat(3, 1, 1))
+        ])
+    else:
+        return VT.Compose([
+            AT.MelSpectrogram(sample_rate=sample_rate, f_max=18000, n_mels=224, n_fft=4096,
+                              win_length=2205, hop_length=308),
+            VT.ToPILImage(),
+            VT.Lambda(lambda x: x.convert('RGB')),
+            VT.Resize((224, 224)),
+            VT.ToTensor(),  # 将图片转换为Tensor
+            VT.Normalize(mean=[0.485, 0.456, 0.406],  # 图像标准化
+                         std=[0.229, 0.224, 0.225])
+        ])
