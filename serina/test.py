@@ -11,10 +11,11 @@ def test_model():
         model = create_model(get_num_classes())
 
         pth = torch.load(get_pth_name(),map_location=conf["device"])
+        model = torch.nn.DataParallel(model)
         model.load_state_dict(pth["model"])
 
         model.to(conf["device"])
-        model = torch.nn.DataParallel(model)
+
         model.eval()
 
         test_dataset = TestSet()
