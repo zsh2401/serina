@@ -8,8 +8,8 @@ conf = {
     "optimizer": "adam",
     "learn_rate": 0.0001,
     "epoch": -1,
-    "spec_h": 224,
-    "spec_w": 224
+    "spec_h": 512,
+    "spec_w": 512
 }
 # 冗余
 if torch.cuda.is_available():
