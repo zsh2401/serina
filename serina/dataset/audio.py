@@ -80,7 +80,11 @@ def build_transform():
         spec_t = AT.Spectrogram(sample_rate)
     elif conf["spec"] == "mfcc":
         spec_t = AT.MFCC(sample_rate=sample_rate)
-
+    elif conf["spec"] == "log-mel":
+        spec_t = VT.Compose([
+            spec_t,
+            AT.AmplitudeToDB()
+        ])
     return VT.Compose([
         spec_t,
         VT.ToPILImage(),

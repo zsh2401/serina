@@ -15,7 +15,7 @@ parser.add_argument("--sample-rate", type=int, help="The sample rate.", default=
 parser.add_argument("--epoch", type=int, help="Training epochs, -1 stand for infinite.", default=-1)
 parser.add_argument("--device", type=str, help="Running on certain device, default is auto.", default="auto")
 parser.add_argument("--learn-rate", type=float, help="Initial learn rate for training", default=0.001)
-parser.add_argument("--spec", type=str, help="The spectrogram type", choices=["mel", "spec", "mfcc"],
+parser.add_argument("--spec", type=str, help="The spectrogram type", choices=["mel", "log-mel", "spec", "mfcc"],
                     default='mel')
 parser.add_argument("--model", type=str, help="The model", choices=["resnet18", "densenet121", "serina"],
                     default="resnet18")
