@@ -31,6 +31,7 @@ def train():
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
 
     model.to(conf["device"])
+    model = torch.nn.DataParallel(model)
     criterion = criterion.to(conf["device"])
 
     epoch = 0
