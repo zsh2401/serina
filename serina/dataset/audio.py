@@ -111,10 +111,11 @@ def build_transform():
         return VT.Compose([
             AT.MelSpectrogram(sample_rate=sample_rate, f_max=18000, n_mels=224, n_fft=4096,
                               win_length=2205, hop_length=308),
-            VT.ToPILImage(),
-            VT.Lambda(lambda x: x.convert('RGB')),
+            # VT.ToPILImage(),
+            VT.Lambda(lambda x: x.repeat(3, 1, 1)),
+            # VT.Lambda(lambda x: x.convert('RGB')),
             VT.Resize((224, 224)),
-            VT.ToTensor(),  # 将图片转换为Tensor
-            VT.Normalize(mean=[0.485, 0.456, 0.406],  # 图像标准化
-                         std=[0.229, 0.224, 0.225])
+            # VT.ToTensor(),  # 将图片转换为Tensor
+            # VT.Normalize(mean=[0.485, 0.456, 0.406],  # 图像标准化
+            #              std=[0.229, 0.224, 0.225])
         ])
