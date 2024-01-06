@@ -11,6 +11,7 @@ conf = {
     "spec_h": 512,
     "spec_w": 512
 }
+S_FILE_NAME = None
 # 冗余
 if torch.cuda.is_available():
     conf["device"] = "cuda"
@@ -21,8 +22,10 @@ else:
 
 
 def get_pth_name():
-    return "serina-" + ".".join([str(conf[k]) for k in conf if k != "device"]) + ".pth"
-
+    if S_FILE_NAME is None:
+        return "serina-" + ".".join([str(conf[k]) for k in conf if k != "device"]) + ".pth"
+    else:
+        return S_FILE_NAME
 
 def print_conf():
     print("==Serina Configration==")

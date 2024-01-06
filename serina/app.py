@@ -10,7 +10,7 @@ import numpy as np
 
 class SerinaApplication:
     def __init__(self):
-        self.model = create_model(get_num_classes())
+        self.model = torch.nn.DataParallel(create_model(get_num_classes()))
         print(f"Loading {get_pth_name()}")
         checkpoint = torch.load(get_pth_name(), map_location=conf["device"])
         self.model.load_state_dict(checkpoint["model"])
