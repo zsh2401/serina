@@ -76,7 +76,7 @@ def train():
             return _accuracy, val_loss
 
     def train_one_epoch():
-        with Bar(f'Epoch {epoch_str} Training ', max=len(data_loader), suffix='%(percent)d%%') as bar:
+        with Bar(f'Epoch {epoch} Training ', max=len(data_loader), suffix='%(percent)d%%') as bar:
             for i, (inputs, labels) in enumerate(data_loader):
                 # start = time.time()
                 labels = labels.to(conf["device"])
