@@ -14,6 +14,7 @@ def test_model():
         model.load_state_dict(pth["model"])
 
         model.to(conf["device"])
+        model = torch.nn.DataParallel(model)
         model.eval()
 
         test_dataset = TestSet()
