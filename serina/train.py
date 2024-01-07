@@ -28,7 +28,7 @@ def train():
     else:
         optimizer = optim.SGD(model.parameters(), lr=conf["learn_rate"])
     print(f"Using {optimizer} as optimizer")
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
 
     model.to(conf["device"])
     model = torch.nn.DataParallel(model)

@@ -5,6 +5,7 @@ from .. import conf
 
 
 def create_model(num_classes) -> nn.Module:
+    # torchvision.models.resnet
     if conf["model"] == "densenet121":
         model = torchvision.models.densenet121(pretrained=True)
         model.classifier = nn.Linear(model.classifier.in_features, num_classes)
