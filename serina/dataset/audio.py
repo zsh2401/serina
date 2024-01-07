@@ -108,7 +108,9 @@ def build_transform():
             AT.MelSpectrogram(sample_rate=sample_rate, f_max=18000, n_mels=224, n_fft=4096,
                               win_length=2205, hop_length=308),
             # VT.ToPILImage(),
+            AT.AmplitudeToDB(),
             VT.Lambda(lambda x: x.repeat(3, 1, 1)),
+
             # VT.Lambda(lambda x: x.convert('RGB')),
             VT.Resize((224, 512)),
             # VT.ToTensor(),  # 将图片转换为Tensor
