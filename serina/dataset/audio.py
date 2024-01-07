@@ -97,6 +97,8 @@ def build_transform():
             AT.AmplitudeToDB(),
             VT.Lambda(lambda x: x.repeat(3, 1, 1)),
             VT.Resize((224, 224)),
+            VT.Normalize(mean=[0.485, 0.456, 0.406],  # 图像标准化
+                         std=[0.229, 0.224, 0.225])
         ])
     elif strategy == "mfcc":
         return VT.Compose([
