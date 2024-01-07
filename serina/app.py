@@ -1,16 +1,13 @@
 import time
 
+import numpy as np
 import torch
+import vlc
 
 from serina import get_num_classes, index_to_label, \
     get_pth_name, conf
 from serina.dataset.audio import standardize, build_transform
 from serina.model import create_model
-from playsound import playsound
-import numpy as np
-import vlc
-
-from serina.player import Player
 
 
 class SerinaApplication:
